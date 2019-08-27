@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import javax.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -21,13 +22,16 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class TimeEntryService {
 
-  private TimeEntryRepository timeEntryRepository;
-
   private static final String DATE_FORMAT = "yyyy-MM-dd";
   private static final String START_DATE1 = "T12:00:00.000Z";
   private static final String END_DATE1 = "T16:00:00.000Z";
   private static final String START_DATE2 = "T17:00:00.000Z";
   private static final String END_DATE2 = "T21:00:00.000Z";
+
+  @Value("${clockify.entry.url}")
+  private String clockifyUrl;
+
+  private TimeEntryRepository timeEntryRepository;
 
   public TimeEntryService(TimeEntryRepository timeEntryRepository) {
     this.timeEntryRepository = timeEntryRepository;
@@ -54,7 +58,7 @@ public class TimeEntryService {
 
     try {
       restTemplate.exchange(
-          "https://api.clockify.me/api/v1/workspaces/5d4c1feeac685f40379c4c28/time-entries",
+          clockifyUrl,
           HttpMethod.POST,
           entity,
           new ParameterizedTypeReference<String>(){},

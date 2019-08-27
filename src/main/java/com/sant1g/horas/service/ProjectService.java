@@ -5,6 +5,7 @@ import com.sant1g.horas.request.SlackMessageRequest;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -17,6 +18,9 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class ProjectService {
 
+  @Value("${clockify.projects.url}")
+  private String clockifyUrl;
+
   public List<Project> getAllProjects(String apiKey) {
     RestTemplate restTemplate = new RestTemplate();
     HttpHeaders headers = new HttpHeaders();
@@ -26,7 +30,7 @@ public class ProjectService {
 
     try {
       ResponseEntity<List<Project>> response = restTemplate.exchange(
-          "https://api.clockify.me/api/v1/workspaces/5d4c1feeac685f40379c4c28/projects",
+          clockifyUrl,
           HttpMethod.GET,
           entity,
           new ParameterizedTypeReference<List<Project>>(){},
