@@ -204,7 +204,7 @@ public class HorasController {
     SlackMessageRequest tempMessage = new SlackMessageRequest.Builder(PROCESSIG_REQUEST).build();
     messageService.sendMessage(tempMessage, responseUrl);
     SlackUser user = slackUserService.findOrFail(userId);
-    List<Date> dates = timeEntryService.getDatesWithoutEntries(user.getApiKey());
+    List<Date> dates = timeEntryService.getDatesWithoutEntries(user);
     SlackMessageRequest request = new SlackMessageRequest.Builder(dates, 0).build();
     messageService.sendMessage(request, responseUrl);
   }

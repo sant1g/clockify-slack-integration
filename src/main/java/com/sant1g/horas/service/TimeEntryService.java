@@ -43,7 +43,8 @@ public class TimeEntryService {
   @Value("${clockify.entry.url}")
   private String clockifyUrl;
 
-  @Value("https://api.clockify.me/api/v1/workspaces/5d4c1feeac685f40379c4c28/user/5d4c83b0ac685f40379cbb4f/time-entries")
+  @Value("${clockify.entries.url}")
+  // @Value("5d4c83b0ac685f40379cbb4f")
   private String clockifyEntriesUrl;
 
   private TimeEntryRepository timeEntryRepository;
@@ -96,16 +97,16 @@ public class TimeEntryService {
     }
   }
 
-  public List<ClockifyTimeEntry> getClockifyEntries(String apiKey) {
+  public List<ClockifyTimeEntry> getClockifyEntries(SlackUser user) {
     RestTemplate restTemplate = new RestTemplate();
     HttpHeaders headers = new HttpHeaders();
-    headers.add("X-Api-Key", apiKey);
+    headers.add("X-Api-Key", user.getApiKey());
 
     HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
 
     try {
       ResponseEntity<List<ClockifyTimeEntry>> response = restTemplate.exchange(
-          clockifyEntriesUrl,
+          clockifyEntriesUrl.concat(user.getClockifyId()).concat("/time-entries"),
           HttpMethod.GET,
           entity,
           new ParameterizedTypeReference<List<ClockifyTimeEntry>>() {
@@ -159,8 +160,8 @@ public class TimeEntryService {
     return new SimpleDateFormat(DATE_FORMAT).parse(date);
   }
 
-  public List<Date> getDatesWithoutEntries(String apiKey) {
-    List<ClockifyTimeEntry> entries = this.getClockifyEntries(apiKey);
+  public List<Date> getDatesWithoutEntries(SlackUser user) {
+    List<ClockifyTimeEntry> entries = this.getClockifyEntries(user);
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
     List<Date> dates = new ArrayList<>();
     entries.forEach(entry -> {
