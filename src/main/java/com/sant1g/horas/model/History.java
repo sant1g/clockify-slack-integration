@@ -1,6 +1,5 @@
 package com.sant1g.horas.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
 import java.util.Date;
 import javax.persistence.Entity;
@@ -12,7 +11,7 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
 @Entity
-public class TimeEntry implements Serializable {
+public class History implements Serializable {
 
   @Id
   @GeneratedValue
@@ -22,12 +21,23 @@ public class TimeEntry implements Serializable {
   @JoinColumn(name = "slack_user_id", nullable = false)
   private SlackUser slackUser;
 
+  @ManyToOne
+  @JoinColumn(name = "project_id", nullable = false)
+  private Project project;
+
   private String message;
 
   @Temporal(TemporalType.TIMESTAMP)
   private Date date;
 
-  public TimeEntry() {
+  public History() {
+  }
+
+  public History(TimeEntry entry, Project project) {
+    this.slackUser = entry.getSlackUser();
+    this.project = project;
+    this.message = entry.getMessage();
+    this.date = entry.getDate();
   }
 
   public Long getId() {
@@ -44,6 +54,14 @@ public class TimeEntry implements Serializable {
 
   public void setSlackUser(SlackUser slackUser) {
     this.slackUser = slackUser;
+  }
+
+  public Project getProject() {
+    return project;
+  }
+
+  public void setProject(Project project) {
+    this.project = project;
   }
 
   public String getMessage() {

@@ -1,20 +1,32 @@
 package com.sant1g.horas.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sant1g.horas.model.ClockifyTimeEntry;
+import com.sant1g.horas.model.History;
+import com.sant1g.horas.model.Project;
 import com.sant1g.horas.model.SlackUser;
 import com.sant1g.horas.model.TimeEntry;
+import com.sant1g.horas.repository.HistoryRepository;
 import com.sant1g.horas.repository.TimeEntryRepository;
 import com.sant1g.horas.request.ClockifyEntryRequest;
 import com.sant1g.horas.response.SlackOptionResponse;
+import com.sant1g.horas.util.DateComparator;
+import com.sant1g.horas.util.Util;
 import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -31,14 +43,29 @@ public class TimeEntryService {
   @Value("${clockify.entry.url}")
   private String clockifyUrl;
 
-  private TimeEntryRepository timeEntryRepository;
+  @Value("https://api.clockify.me/api/v1/workspaces/5d4c1feeac685f40379c4c28/user/5d4c83b0ac685f40379cbb4f/time-entries")
+  private String clockifyEntriesUrl;
 
-  public TimeEntryService(TimeEntryRepository timeEntryRepository) {
+  private TimeEntryRepository timeEntryRepository;
+  private HistoryRepository historyRepository;
+
+  public TimeEntryService(TimeEntryRepository timeEntryRepository,
+      HistoryRepository historyRepository) {
     this.timeEntryRepository = timeEntryRepository;
+    this.historyRepository = historyRepository;
+  }
+
+  public void save(TimeEntry timeEntry) {
+    this.timeEntryRepository.save(timeEntry);
   }
 
   public TimeEntry findTimeEntryBySlackUserId(Long id) {
     return timeEntryRepository.findTimeEntryBySlackUserId(id);
+  }
+
+  public void saveHistory(TimeEntry entry, Project project) {
+    History history = new History(entry, project);
+    historyRepository.save(history);
   }
 
   public void createTimeEntry(SlackUser user, String message) {
@@ -61,10 +88,34 @@ public class TimeEntryService {
           clockifyUrl,
           HttpMethod.POST,
           entity,
-          new ParameterizedTypeReference<String>(){},
+          new ParameterizedTypeReference<String>() {
+          },
           headers);
     } catch (HttpClientErrorException e) {
       // TODO: Log Message
+    }
+  }
+
+  public List<ClockifyTimeEntry> getClockifyEntries(String apiKey) {
+    RestTemplate restTemplate = new RestTemplate();
+    HttpHeaders headers = new HttpHeaders();
+    headers.add("X-Api-Key", apiKey);
+
+    HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
+
+    try {
+      ResponseEntity<List<ClockifyTimeEntry>> response = restTemplate.exchange(
+          clockifyEntriesUrl,
+          HttpMethod.GET,
+          entity,
+          new ParameterizedTypeReference<List<ClockifyTimeEntry>>() {
+          },
+          headers);
+
+      return response.getBody();
+    } catch (HttpClientErrorException e) {
+      // TODO: Log Message
+      return null;
     }
   }
 
@@ -73,11 +124,13 @@ public class TimeEntryService {
     timeEntryRepository.deleteAllBySlackUserId(userId);
   }
 
-  public ClockifyEntryRequest generateFirstRequest(TimeEntry timeEntry, SlackOptionResponse option) {
+  public ClockifyEntryRequest generateFirstRequest(TimeEntry timeEntry,
+      SlackOptionResponse option) {
     return getClockifyEntryRequest(timeEntry, option, START_DATE2, END_DATE2);
   }
 
-  public ClockifyEntryRequest generateSecondRequest(TimeEntry timeEntry, SlackOptionResponse option) {
+  public ClockifyEntryRequest generateSecondRequest(TimeEntry timeEntry,
+      SlackOptionResponse option) {
     return getClockifyEntryRequest(timeEntry, option, START_DATE1, END_DATE1);
   }
 
@@ -100,5 +153,26 @@ public class TimeEntryService {
   private String generateDate(Date date, String concatString) {
     SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
     return sdf.format(date).concat(concatString);
+  }
+
+  public Date parseDateString(String date) throws ParseException {
+    return new SimpleDateFormat(DATE_FORMAT).parse(date);
+  }
+
+  public List<Date> getDatesWithoutEntries(String apiKey) {
+    List<ClockifyTimeEntry> entries = this.getClockifyEntries(apiKey);
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+    List<Date> dates = new ArrayList<>();
+    entries.forEach(entry -> {
+      try {
+        dates.add(sdf.parse(entry.getTimeInterval().getStart()));
+      } catch (ParseException e) {
+        // handle
+      }
+    });
+
+    return Util.getWeekDaysFromMonth().stream()
+        .filter(day -> Collections.binarySearch(dates, day, new DateComparator()) < 0)
+        .collect(Collectors.toList());
   }
 }

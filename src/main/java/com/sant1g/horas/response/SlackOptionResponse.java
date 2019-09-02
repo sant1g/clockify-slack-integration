@@ -92,6 +92,7 @@ public class SlackOptionResponse {
     }
   }
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class Action {
 
     @JsonProperty("action_id")
@@ -103,6 +104,9 @@ public class SlackOptionResponse {
     private String value;
     private String type;
     private Text text;
+
+    @JsonProperty("selected_date")
+    private String selectedDate;
 
     @JsonProperty("action_ts")
     private String actionTs;
@@ -147,6 +151,14 @@ public class SlackOptionResponse {
 
     public void setText(Text text) {
       this.text = text;
+    }
+
+    public String getSelectedDate() {
+      return selectedDate;
+    }
+
+    public void setSelectedDate(String selectedDate) {
+      this.selectedDate = selectedDate;
     }
 
     public String getActionTs() {

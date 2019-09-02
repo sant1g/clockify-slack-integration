@@ -1,6 +1,7 @@
 package com.sant1g.horas.service;
 
 import com.sant1g.horas.model.Project;
+import com.sant1g.horas.repository.ProjectRepository;
 import com.sant1g.horas.request.SlackMessageRequest;
 
 import java.util.List;
@@ -20,6 +21,16 @@ public class ProjectService {
 
   @Value("${clockify.projects.url}")
   private String clockifyUrl;
+
+  private final ProjectRepository projectRepository;
+
+  public ProjectService(ProjectRepository projectRepository) {
+    this.projectRepository = projectRepository;
+  }
+
+  public Project getById(String projectId) {
+    return this.projectRepository.getById(projectId);
+  }
 
   public List<Project> getAllProjects(String apiKey) {
     RestTemplate restTemplate = new RestTemplate();
