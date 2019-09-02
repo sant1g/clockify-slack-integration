@@ -64,6 +64,7 @@ public class SlackMessageRequest {
     private Block header = new Block.Builder("section").text("Select your active project :pencil:").build();
     private Block divider = new Block.Builder("divider").build();
 
+    // TODO: Refactor this
     public Builder(List<Project> projects) {
       blocks.add(new Block.Builder("section").text(":calendar: Pick a date").datepicker().build());
       blocks.add(header);
@@ -75,6 +76,7 @@ public class SlackMessageRequest {
       });
     }
 
+    // TODO: Refactor this
     public Builder(List<History> entries, Boolean history) {
       blocks.add(new Block.Builder("section").text(":alarm_clock: Your past 10 entries:").build());
       blocks.add(divider);
@@ -90,6 +92,7 @@ public class SlackMessageRequest {
       });
     }
 
+    // TODO: Refactor this
     public Builder(List<Date> dates, Integer days) {
       blocks.add(new Block.Builder("section").text(":back: Days without entries:").build());
       blocks.add(divider);
