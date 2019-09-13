@@ -44,7 +44,6 @@ public class TimeEntryService {
   private String clockifyUrl;
 
   @Value("${clockify.entries.url}")
-  // @Value("5d4c83b0ac685f40379cbb4f")
   private String clockifyEntriesUrl;
 
   private TimeEntryRepository timeEntryRepository;
@@ -97,7 +96,7 @@ public class TimeEntryService {
     }
   }
 
-  public List<ClockifyTimeEntry> getClockifyEntries(SlackUser user) {
+  private List<ClockifyTimeEntry> getClockifyEntries(SlackUser user) {
     RestTemplate restTemplate = new RestTemplate();
     HttpHeaders headers = new HttpHeaders();
     headers.add("X-Api-Key", user.getApiKey());
@@ -115,8 +114,7 @@ public class TimeEntryService {
 
       return response.getBody();
     } catch (HttpClientErrorException e) {
-      // TODO: Log Message
-      return null;
+      return new ArrayList<>();
     }
   }
 
@@ -168,7 +166,7 @@ public class TimeEntryService {
       try {
         dates.add(sdf.parse(entry.getTimeInterval().getStart()));
       } catch (ParseException e) {
-        // handle
+        // TODO: Handle this
       }
     });
 

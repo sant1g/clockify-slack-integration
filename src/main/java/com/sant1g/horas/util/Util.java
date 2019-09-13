@@ -14,7 +14,6 @@ public class Util {
     Calendar c = Calendar.getInstance();
     c.setTime(new Date());
     LocalDate end = LocalDate.now();
-    //LocalDate end = LocalDate.of(2019, 9, 30);
     LocalDate start = LocalDate.of(end.getYear(), end.getMonth(), 1);
     List<LocalDate> localDates = getDatesBetween(start, end);
     List<Date> dates = transformLocalDates(localDates);
